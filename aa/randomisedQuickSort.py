@@ -48,13 +48,13 @@ def hoare_partition(arr, low, high):
     while True:
         i += 1
         comparison_count += 1
-        while arr[i] < pivot:
+        while i <= high and arr[i] < pivot:
             i += 1
             comparison_count += 1
 
         j -= 1
         comparison_count += 1
-        while arr[j] > pivot:
+        while j >= low and arr[j] > pivot:
             j -= 1
             comparison_count += 1
 
@@ -92,5 +92,6 @@ end = time.time()
 print("Time consumed in Hoare: ", end - start)
 print("Total comparisons (Hoare):", comparison_count)
 print("Total swaps (Hoare):", swap_count)
+
 
 
