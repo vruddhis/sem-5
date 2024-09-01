@@ -1,0 +1,30 @@
+#include<stdio.h>
+#include<stdlib.h>
+
+void helper() {
+   
+    push();
+    pop();
+}
+
+int main() {
+    
+    push();
+    push();
+    pop();
+    pop();
+    push();
+    push();
+    pop();
+
+    
+
+   
+    return 0;
+}
+
+void anotherFunction() {
+    
+    push();
+    pop();
+}

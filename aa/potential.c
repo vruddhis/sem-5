@@ -4,11 +4,13 @@
 #include<ctype.h>
 
 int main() {
-    char ch, buffer[15];
+    int n;
+    char ch, buffer[1000];
     FILE *fp;
     int i = 0, push_count = 0, pop_count = 0;
     int brace_count = 0;
     int inside_main = 0;
+    int total = 0;
 
     fp = fopen("program.txt", "r");
 
@@ -16,7 +18,7 @@ int main() {
         printf("Error while opening the file\n");
         exit(0);
     }
-
+    printf("Let the potential function be the number of elements in the stack\nphi(0) = 0");
     while((ch = fgetc(fp)) != EOF) {
         if(ch == '{') {
             if(inside_main) {
@@ -40,9 +42,18 @@ int main() {
                     i = 0;
 
                     if(strcmp(buffer, "push") == 0) {
-                        push_count++;
+                        printf("phi(D_k-1) = %d\n", n);
+                        n++;
+                        printf("phi(D_k) = %d\n", n);
+                        printf("Amortized cost = 1 + 1 = 2\n");
+
+                        total+=2;
                     } else if(strcmp(buffer, "pop") == 0) {
-                        pop_count++;
+                        printf("phi(D_k-1) = %d\n", n);
+                        n--;
+                        printf("phi(D_k) = %d\n", n);
+                        printf("Amortized cost = 1 + (- 1) = 0\n");
+                        
                     }
                 }
             }
@@ -64,9 +75,11 @@ int main() {
 
     fclose(fp);
 
-    printf("Number of 'push' occurrences: %d\n", push_count);
-    printf("Number of 'pop' occurrences: %d\n", pop_count);
+    
+    
+    
+    printf("Total cost is O(%d)\n", total);
+    
 
     return 0;
 }
-

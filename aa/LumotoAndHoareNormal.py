@@ -58,25 +58,25 @@ def hoare_quicksort(arr, low, high):
         pi = hoare_partition(arr, low, high)
         hoare_quicksort(arr, low, pi-1)
         hoare_quicksort(arr, pi + 1, high)
+arr_copy = arr.copy()
+comparison_count = 0
+swap_count = 0
+start = time.time()
+hoare_quicksort(arr_copy, 0, n - 1)
+end = time.time()
+print("Time consumed in Hoare: ", end - start)
+print("Total comparisons:", comparison_count)
+print("Total swaps:", swap_count)
 
 
 print("Array length", n)
 comparison_count = 0
 swap_count = 0
 start = time.time()
-lomuto_quicksort(arr.copy(), 0, n - 1)
+lomuto_quicksort(arr, 0, n - 1)
 end = time.time()
 print("Time consumed in Lomuto: ", end - start)
-
 print("Total comparisons:", comparison_count)
 print("Total swaps:", swap_count)
 
-comparison_count = 0
-swap_count = 0
-start = time.time()
-hoare_quicksort(arr.copy(), 0, n - 1)
-end = time.time()
-print("Time consumed in Hoare: ", end - start)
 
-print("Total comparisons:", comparison_count)
-print("Total swaps:", swap_count)

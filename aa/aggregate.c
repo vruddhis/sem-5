@@ -4,7 +4,7 @@
 #include<ctype.h>
 
 int main() {
-    char ch, buffer[15];
+    char ch, buffer[1000];
     FILE *fp;
     int i = 0, push_count = 0, pop_count = 0;
     int brace_count = 0;
@@ -64,9 +64,11 @@ int main() {
 
     fclose(fp);
 
-    printf("Number of 'push' occurrences: %d\n", push_count);
-    printf("Number of 'pop' occurrences: %d\n", pop_count);
+    
+    int total = push_count + pop_count;
+    printf("Aggregate analysis:\n");
+    printf("Total cost is O(%d)\n", total);
+    printf("Cost of one operation is O(%d)/(%d + %d) = O(1)", total, push_count, pop_count);
 
     return 0;
 }
-
