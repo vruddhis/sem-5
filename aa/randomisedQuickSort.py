@@ -4,8 +4,6 @@ import time
 n = np.random.randint(0, 100000, 10)[0]
 arr = np.random.randint(-10000000, 10000000, n)
 
-
-
 comparison_count = 0
 swap_count = 0
 

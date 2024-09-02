@@ -334,6 +334,5 @@ int main() {
     result = timeComplexity(testCode3);
     printf("Test 3 Result: %s\n", result);
     free(result);
-
     return 0;
 }
