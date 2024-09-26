@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 typedef struct Node {
     int val;                  
     struct Node* parent;       
@@ -28,7 +29,7 @@ Node* right_rotate(Node** root, Node* x) {
     
     y->right_child = x;  
     x->parent = y;   
-    return root;    
+    return *root;    
 }
 
 Node* left_rotate(Node** root, Node* x) {
@@ -51,100 +52,130 @@ Node* left_rotate(Node** root, Node* x) {
     
     y->left_child = x;  
     x->parent = y;  
-    return root;   
+    return *root;   
 }
 
 int is_root(Node* node) {
     return (node != NULL && node->parent == NULL);
 }
 
-Node* insert_node(Node* root, int x){
-    Node *newNode = (Node*)malloc(sizeof(Node));
-    Node* parent; Node* grandparent; Node* uncle; Node* temp;
-    char uncle_color;
-    newNode -> val = x;
-    newNode -> colour = 'R';
-    newNode -> left_child = NULL;
-    newNode -> right_child = NULL;
-    if (root == NULL){
-        root = newNode;
-        root -> colour = 'B';
-        return root;
+Node* insert_node(Node* root, int x) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->val = x;
+    newNode->colour = 'R'; 
+    newNode->left_child = NULL;
+    newNode->right_child = NULL;
+    newNode->parent = NULL;
+
+    if (root == NULL) { 
+        newNode->colour = 'B'; 
+        return newNode;
     }
+
     Node* curr = root;
-    while (curr != NULL){
-        if (curr -> val > x){
-            if(curr->right_child==NULL){
-                curr->right_child = newNode;
-                parent = curr;
-                grandparent = curr -> parent;
-                if (parent == grandparent -> left_child){
-                    uncle = grandparent -> right_child;
-                }
-                else{
-                    uncle = grandparent -> left_child;
-                }
-                if (uncle == NULL){
-                    uncle_color = 'B';
-                }
-                else{
-                    uncle_color = uncle -> colour;
-                }
-                if (uncle_color == 'R'){
-                    grandparent -> colour = 'R';
-                    parent -> colour = 'B';
-                    uncle -> colour = 'B';
-                    if (is_root(grandparent)){
-                        grandparent -> colour = 'B';
-                    }
-                    return root;
-                } //case 1 over
-                else{ 
-                    if (parent == grandparent -> left_child && newNode == parent -> right_child){// case 2A
-                        left_rotate(root, parent);
-                        temp = parent;
-                        parent = newNode;
-                        newNode = temp;
-                        //go to case 3
-                    }
-                    if (parent == grandparent -> right_child && newNode == parent -> left_child){//case 2B
-                        right_rotate(root, parent);
-                        temp = parent;
-                        parent = newNode;
-                        newNode = temp;
-                        //go to case 3
-                    }
-                }
-                //case 3
-                if (parent == grandparent -> left_child && newNode == parent -> left_child) { // Case 3A: Left-Left
-                    right_rotate(&root, grandparent);
-                    parent->colour = 'B';
-                    grandparent->colour = 'R';
-                } else if (parent == grandparent -> right_child && newNode == parent -> right_child) { // Case 3B: Right-Right
-                    left_rotate(&root, grandparent);
-                    parent->colour = 'B';
-                    grandparent->colour = 'R';
-                }
-                return root;
-                
-            }
-            else{
-                curr = curr->right_child;
-            }
-            }
-        else{
-                if(curr -> left_child == NULL){
-                    curr -> left_child = newNode;
-                }
-                else{
-                    curr = curr -> left_child;
-                }
+    Node* parent = NULL;
+    
+
+    while (curr != NULL) {
+        parent = curr;
+        if (x < curr->val) {
+            curr = curr->left_child;
+        } else {
+            curr = curr->right_child;
         }
     }
+
+    newNode->parent = parent;
+    if (x < parent->val) {
+        parent->left_child = newNode;
+    } else {
+        parent->right_child = newNode;
     }
 
+    while (newNode != root && newNode->parent->colour == 'R') {
+        Node* grandparent = newNode->parent->parent;
 
+        if (newNode->parent == grandparent->left_child) { 
+            Node* uncle = grandparent->right_child;
 
+            if (uncle != NULL && uncle->colour == 'R') { 
+                grandparent->colour = 'R';
+                newNode->parent->colour = 'B';
+                uncle->colour = 'B';
+                newNode = grandparent; 
+            } else {
+                if (newNode == newNode->parent->right_child) { 
+                    newNode = newNode->parent;
+                    left_rotate(&root, newNode);
+                }
+                newNode->parent->colour = 'B';
+                grandparent->colour = 'R';
+                right_rotate(&root, grandparent);
+            }
+        } else { 
+            Node* uncle = grandparent->left_child;
+
+            if (uncle != NULL && uncle->colour == 'R') { 
+                grandparent->colour = 'R';
+                newNode->parent->colour = 'B';
+                uncle->colour = 'B';
+                newNode = grandparent; 
+            } else {
+                if (newNode == newNode->parent->left_child) { 
+                    newNode = newNode->parent;
+                    right_rotate(&root, newNode);
+                }
+                newNode->parent->colour = 'B';
+                grandparent->colour = 'R';
+                left_rotate(&root, grandparent);
+            }
+        }
+    }
+
+    root->colour = 'B'; 
+    return root;
+}
+
+void inorder(Node* root) {
+    if (root == NULL) {
+        return;
+    }
+
+    inorder(root->left_child); 
+    printf("%d (%c) ", root->val, root->colour); 
+    inorder(root->right_child); 
+}
+
+void postorder(Node* root) {
+    if (root == NULL) {
+        return;
+    }
+
+    postorder(root->left_child); 
+    postorder(root->right_child); 
+    printf("%d (%c) ", root->val, root->colour); 
+}
+
+int main() {
+    Node* root = NULL;
+    int values[] = {10, 20, 30, 15, 25, 5, 1};  
+    int n = sizeof(values) / sizeof(values[0]);
+
+    for (int i = 0; i < n; i++) {
+        printf("%d", values[i]);
+        root = insert_node(root, values[i]);
+
+        printf("Inorder: ");
+        inorder(root);
+        printf("\n");
+
+        printf("Postorder: ");
+        postorder(root);
+        printf("\n");
+    }
+
+    return 0;
+}
 
 
 
