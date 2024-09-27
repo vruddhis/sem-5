@@ -59,6 +59,7 @@ int is_root(Node* node) {
     return (node != NULL && node->parent == NULL);
 }
 
+
 Node* insert_node(Node* root, int x) {
     Node* newNode = (Node*)malloc(sizeof(Node));
     newNode->val = x;
@@ -67,15 +68,14 @@ Node* insert_node(Node* root, int x) {
     newNode->right_child = NULL;
     newNode->parent = NULL;
 
-    if (root == NULL) { 
-        newNode->colour = 'B'; 
+    if (root == NULL) {
+        newNode->colour = 'B';
         return newNode;
     }
 
     Node* curr = root;
     Node* parent = NULL;
     
-
     while (curr != NULL) {
         parent = curr;
         if (x < curr->val) {
@@ -84,7 +84,6 @@ Node* insert_node(Node* root, int x) {
             curr = curr->right_child;
         }
     }
-
     newNode->parent = parent;
     if (x < parent->val) {
         parent->left_child = newNode;
@@ -98,16 +97,17 @@ Node* insert_node(Node* root, int x) {
         if (newNode->parent == grandparent->left_child) { 
             Node* uncle = grandparent->right_child;
 
-            if (uncle != NULL && uncle->colour == 'R') { 
+            if (uncle != NULL && uncle->colour == 'R') { // Case 1
                 grandparent->colour = 'R';
                 newNode->parent->colour = 'B';
                 uncle->colour = 'B';
-                newNode = grandparent; 
+              
             } else {
-                if (newNode == newNode->parent->right_child) { 
+                if (newNode == newNode->parent->right_child) { // Case 2A
                     newNode = newNode->parent;
                     left_rotate(&root, newNode);
                 }
+                // Case 3A
                 newNode->parent->colour = 'B';
                 grandparent->colour = 'R';
                 right_rotate(&root, grandparent);
@@ -115,16 +115,17 @@ Node* insert_node(Node* root, int x) {
         } else { 
             Node* uncle = grandparent->left_child;
 
-            if (uncle != NULL && uncle->colour == 'R') { 
+            if (uncle != NULL && uncle->colour == 'R') { // Case 1
                 grandparent->colour = 'R';
                 newNode->parent->colour = 'B';
                 uncle->colour = 'B';
-                newNode = grandparent; 
+                
             } else {
-                if (newNode == newNode->parent->left_child) { 
+                if (newNode == newNode->parent->left_child) { // Case 2B
                     newNode = newNode->parent;
                     right_rotate(&root, newNode);
                 }
+                // Case 3B
                 newNode->parent->colour = 'B';
                 grandparent->colour = 'R';
                 left_rotate(&root, grandparent);
@@ -135,6 +136,8 @@ Node* insert_node(Node* root, int x) {
     root->colour = 'B'; 
     return root;
 }
+
+
 
 void inorder(Node* root) {
     if (root == NULL) {
@@ -162,7 +165,7 @@ int main() {
     int n = sizeof(values) / sizeof(values[0]);
 
     for (int i = 0; i < n; i++) {
-        printf("%d", values[i]);
+        printf("After inserting %d:", values[i]);
         root = insert_node(root, values[i]);
 
         printf("Inorder: ");
