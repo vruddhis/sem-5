@@ -1,85 +1,59 @@
-# genetic algorithm search of the one max optimization problem
-from numpy.random import randint
-from numpy.random import rand
+import random
 
-# objective function
-def onemax(x):
-	return -sum(x)
 
-# tournament selection
-def selection(pop, scores, k=3):
-	# first random selection
-	selection_ix = randint(len(pop))
-	for ix in randint(0, len(pop), k-1):
-		# check if better (e.g. perform a tournament)
-		if scores[ix] < scores[selection_ix]:
-			selection_ix = ix
-	return pop[selection_ix]
+POPULATION_SIZE = 100  # number of individuals in the population
+GENOME_LENGTH = 10      # length of the binary genome
+MUTATION_RATE = 0.01    # probability of mutation
+GENERATIONS = 10      # number of generations
 
-# crossover two parents to create two children
-def crossover(p1, p2, r_cross):
-	# children are copies of parents by default
-	c1, c2 = p1.copy(), p2.copy()
-	# check for recombination
-	if rand() < r_cross:
-		# select crossover point that is not on the end of the string
-		pt = randint(1, len(p1)-2)
-		# perform crossover
-		c1 = p1[:pt] + p2[pt:]
-		c2 = p2[:pt] + p1[pt:]
-	return [c1, c2]
+def fitness_function(individual): #square of decimal from binary
+    x = 0
+    for i in range(GENOME_LENGTH):
+        x += individual[i] * (2 ** (GENOME_LENGTH - 1 - i))  
+    return x ** 2  
 
-# mutation operator
-def mutation(bitstring, r_mut):
-	for i in range(len(bitstring)):
-		# check for a mutation
-		if rand() < r_mut:
-			# flip the bit
-			bitstring[i] = 1 - bitstring[i]
+#randomly select any 2
+def select_parents(population):
+    return random.choices(population, weights=[fitness_function(ind) for ind in population], k=2)
 
-# genetic algorithm
-def genetic_algorithm(objective, n_bits, n_iter, n_pop, r_cross, r_mut):
-	# initial population of random bitstring
-	pop = [randint(0, 2, n_bits).tolist() for _ in range(n_pop)]
-	# keep track of best solution
-	best, best_eval = 0, objective(pop[0])
-	# enumerate generations
-	for gen in range(n_iter):
-		# evaluate all candidates in the population
-		scores = [objective(c) for c in pop]
-		# check for new best solution
-		for i in range(n_pop):
-			if scores[i] < best_eval:
-				best, best_eval = pop[i], scores[i]
-				print(">%d, new best f(%s) = %.3f" % (gen,  pop[i], scores[i]))
-		# select parents
-		selected = [selection(pop, scores) for _ in range(n_pop)]
-		# create the next generation
-		children = list()
-		for i in range(0, n_pop, 2):
-			# get selected parents in pairs
-			p1, p2 = selected[i], selected[i+1]
-			# crossover and mutation
-			for c in crossover(p1, p2, r_cross):
-				# mutation
-				mutation(c, r_mut)
-				# store for next generation
-				children.append(c)
-		# replace population
-		pop = children
-	return [best, best_eval]
+#single point crossover randomly choosing point
+def crossover(parent1, parent2):
+    crossover_point = random.randint(1, GENOME_LENGTH - 1)
+    offspring = parent1[:crossover_point] + parent2[crossover_point:]
+    return offspring
 
-# define the total iterations
-n_iter = 100
-# bits
-n_bits = 20
-# define the population size
-n_pop = 100
-# crossover rate
-r_cross = 0.9
-# mutation rate
-r_mut = 1.0 / float(n_bits)
-# perform the genetic algorithm search
-best, score = genetic_algorithm(onemax, n_bits, n_iter, n_pop, r_cross, r_mut)
-print('Done!')
-print('f(%s) = %f' % (best, score))
+def mutate(individual):
+    for i in range(GENOME_LENGTH):
+        if random.random() < MUTATION_RATE:
+            individual[i] = 1 - individual[i]  
+    return individual
+
+def create_individual():
+    return [random.randint(0, 1) for _ in range(GENOME_LENGTH)]
+
+def genetic_algorithm():
+
+    population = [create_individual() for _ in range(POPULATION_SIZE)]
+    
+    for generation in range(GENERATIONS):
+        new_population = []
+        
+        for _ in range(POPULATION_SIZE // 2):
+            parent1, parent2 = select_parents(population)
+            offspring1 = crossover(parent1, parent2)
+            offspring2 = crossover(parent2, parent1)
+            new_population.extend([mutate(offspring1), mutate(offspring2)])
+        
+        population = new_population
+        best_fitness = max(fitness_function(ind) for ind in population)
+        print('Generation' + str(generation + 1) + ': Best Fitness =' + str(best_fitness))
+
+    
+    best_individual = max(population, key=fitness_function)
+    best_value = 0
+    for i in range(GENOME_LENGTH):
+        best_value += best_individual[i] * (2 ** (GENOME_LENGTH - 1 - i))  # Calculate decimal value
+    
+    print(f'Best Individual: {best_individual}, Best Value (x): {best_value}, Fitness: {fitness_function(best_individual)}')
+
+genetic_algorithm()
