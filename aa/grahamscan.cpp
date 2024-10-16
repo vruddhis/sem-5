@@ -1,85 +1,102 @@
-
 #include <conio.h>
 #include <dos.h>
 #include <graphics.h>
 #include <iostream.h>
 #include <math.h>
+#include <cstdlib.h>
 
 struct Point {
     int x, y;
 };
-float sine(struct Point p){
-	float x = (float)p.x;
-	float y = (float)p.y;
-	float mag;
-	mag = sqrt(x*x+y*y);
-	return y/mag;
 
+float sine(struct Point p) {
+    float x = (float)p.x;
+    float y = (float)p.y;
+    float mag;
+    mag = sqrt(x * x + y * y);
+    return y / mag;
 }
 
-float dist(struct Point p){
-	float x = (float)p.x;
-	float y = (float)p.y;
-	float mag;
-	mag = sqrt(x*x+y*y);
-	return mag;
+float dist(struct Point p) {
+    float x = (float)p.x;
+    float y = (float)p.y;
+    float mag;
+    mag = sqrt(x * x + y * y);
+    return mag;
+}
 
+int orientation(Point p, Point q, Point r) {
+    int val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+    if (val == 0) return 0;  
+    return (val > 0) ? 1 : 2; 
+}
+
+int comparePolar(const void* vp1, const void* vp2) {
+    Point* p1 = (Point*)vp1;
+    Point* p2 = (Point*)vp2;
+    float sine1 = sine(*p1);
+    float sine2 = sine(*p2);
+    if (sine1 != sine2) {
+        return (sine1 < sine2) ? -1 : 1; 
+    }
+    
+    float dist1 = dist(*p1);
+    float dist2 = dist(*p2);
+    return (dist1 < dist2) ? -1 : 1;
 }
 
 void ConvexHull(struct Point arr[], int n) {
     if (n < 3) return;
-	struct Point temp;
+
+    struct Point temp;
     struct Point stack[20];
-    for (int i=0; i<n; i++){
-	for (int j=i; j<n; j++){
-		if(sine(arr[i]) > sine(arr[j])){
-			temp = arr[i];
-			arr[i] = arr[j];
-			arr[j] = temp;
-		}
-		else if(sine(arr[i]) == sine(arr[j]))
-		{
-			if(dist(arr[i]) > dist(arr[j])){
-				temp = arr[i];
-				arr[i] = arr[j];
-				arr[j] = temp;
-			}
-		}
-	}
+    int bottommost = 0;
+    for (int i = 1; i < n; i++) {
+        if (arr[i].y < arr[bottommost].y || (arr[i].y == arr[bottommost].y && arr[i].x < arr[bottommost].x)) {
+            bottommost = i;
+        }
     }
+
+    temp = arr[0];
+    arr[0] = arr[bottommost];
+    arr[bottommost] = temp; // bottommost becomes P0
+
+    qsort(arr + 1, n - 1, sizeof(struct Point), comparePolar); // sorting by polar angle
+
     int top = -1;
 
     stack[++top] = arr[0];
     stack[++top] = arr[1];
-	setcolor(WHITE);
-    line(stack[top-1].x, stack[top-1].y, stack[top].x, stack[top].y);
 
-				     z
+    int screen_height = getmaxy(); 
 
-    for (int j = 2; j < n; j++) {
-	while (top >= 1 &&
-	      (stack[top - 1].x * (stack[top].y - arr[j].y) -
-	       stack[top - 1].y * (stack[top].x - arr[j].x) +
-	       stack[top].x * arr[j].y - stack[top].y * arr[j].x) < 0)
-	{
-	    setcolor(BLACK);
-	    line(stack[top-1].x, stack[top-1].y, stack[top].x, stack[top].y);
-	    top--;
-	}
-	stack[++top] = arr[j];
-	setcolor(WHITE);
-	line(stack[top-1].x, stack[top-1].y, stack[top].x, stack[top].y);
+    setcolor(WHITE);
+    line(stack[top - 1].x, screen_height - stack[top - 1].y, stack[top].x, screen_height - stack[top].y);
 
-	delay(4000);
+    stack[++top] = arr[2];
+    line(stack[top - 1].x, screen_height - stack[top - 1].y, stack[top].x, screen_height - stack[top].y);
+
+    for (int j = 3; j < n; j++) {
+        while (top >= 1 && orientation(stack[top - 1], stack[top], arr[j]) != 2) {
+            setcolor(BLACK);
+            line(stack[top - 1].x, screen_height - stack[top - 1].y, stack[top].x, screen_height - stack[top].y);
+            top--;
+        }
+
+        stack[++top] = arr[j];
+        setcolor(WHITE);
+        line(stack[top - 1].x, screen_height - stack[top - 1].y, stack[top].x, screen_height - stack[top].y);
+
+        delay(4000);
     }
-    line(stack[top].x, stack[top].y, arr[0].x, arr[0].y);
+    line(stack[top].x, screen_height - stack[top].y, arr[0].x, screen_height - arr[0].y);
 }
 
 int main() {
     int gd = DETECT, gm;
 
     initgraph(&gd, &gm, "C:\\TURBOC3\\BGI");
- struct Point points[6];
+    struct Point points[6];
     int n = 6;
     points[0].x = 100; points[0].y = 200;
     points[1].x = 200; points[1].y = 300;
@@ -87,11 +104,15 @@ int main() {
     points[3].x = 400; points[3].y = 400;
     points[4].x = 350; points[4].y = 150;
     points[5].x = 250; points[5].y = 100;
+
+    int screen_height = getmaxy();
+
     for (int i = 0; i < n; i++) {
-	circle(points[i].x, points[i].y, 3);
+        circle(points[i].x, screen_height - points[i].y, 3); 
     }
+
     delay(4000);
-	ConvexHull(points, n);
+    ConvexHull(points, n);
     getch();
     closegraph();
 
