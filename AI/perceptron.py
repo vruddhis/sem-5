@@ -1,22 +1,46 @@
-import math
-def sig(x):
- return 1/(1 + math.exp(-x))
-def sign(x):
-    if x>0: return 1
-    return -1
-n = int(input("How many weights/inputs are there?"))
+import random
 
-ans = 0
-for i in range(1, n+1):
-    w = (int(input("What is weight " + str(i) + "?")))
-    x = (int(input("What is input " + str(i) + "?")))
-    ans += w + x
-print("Summation is ", ans)
-print("Using sigmoidal function")
-y = sig(ans)
-print("Output is ", y)
-print("Using sign function")
-y = sign(ans)
-print("Output is ", y)
+def sign(x):
+    if x > 0:
+        return 1
+    else:
+        return -1
+
+def perceptron(inputs, weights, bias):
+    weighted_sum = sum([w * x for w, x in zip(weights, inputs)]) + bias
+    return sign(weighted_sum)
+
+
+def train_perceptron(training_data, learning_rate, epochs):
+    n = len(training_data[0][0])  # number of inputs
+    weights = [random.random() for _ in range(n)] #random initialisation
+    bias = random.random()
+
+    for epoch in range(epochs):
+        for inputs, expected_output in training_data:
+            prediction = perceptron(inputs, weights, bias)
+            error = expected_output - prediction
+            for i in range(n):
+                weights[i] += learning_rate * error * inputs[i]
+            bias += learning_rate * error
+
+    return weights, bias
+
+#training data is [(inputs), expected_output], OR gate
+training_data = [
+        ([0, 0], -1), 
+        ([0, 1], 1),
+        ([1, 0], 1),
+        ([1, 1], 1)
+    ]
     
+learning_rate = 0.1
+epochs = 10
     
+weights, bias = train_perceptron(training_data, learning_rate, epochs)
+    
+test_inputs = [1, 0]
+print(f"Test result: {perceptron(test_inputs, weights, bias)}")
+
+
+
