@@ -3,7 +3,6 @@
 #include <graphics.h>
 #include <iostream.h>
 #include <math.h>
-#include <cstdlib.h>
 
 struct Point {
     int x, y;
@@ -12,17 +11,14 @@ struct Point {
 float sine(struct Point p) {
     float x = (float)p.x;
     float y = (float)p.y;
-    float mag;
-    mag = sqrt(x * x + y * y);
+    float mag = sqrt(x * x + y * y);
     return y / mag;
 }
 
 float dist(struct Point p) {
     float x = (float)p.x;
     float y = (float)p.y;
-    float mag;
-    mag = sqrt(x * x + y * y);
-    return mag;
+    return sqrt(x * x + y * y);
 }
 
 int orientation(Point p, Point q, Point r) {
@@ -31,18 +27,18 @@ int orientation(Point p, Point q, Point r) {
     return (val > 0) ? 1 : 2; 
 }
 
-int comparePolar(const void* vp1, const void* vp2) {
-    Point* p1 = (Point*)vp1;
-    Point* p2 = (Point*)vp2;
-    float sine1 = sine(*p1);
-    float sine2 = sine(*p2);
-    if (sine1 != sine2) {
-        return (sine1 < sine2) ? -1 : 1; 
+void bubbleSort(Point arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            float sine1 = sine(arr[j]);
+            float sine2 = sine(arr[j + 1]);
+            if (sine1 > sine2 || (sine1 == sine2 && dist(arr[j]) > dist(arr[j + 1]))) {
+                Point temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
     }
-    
-    float dist1 = dist(*p1);
-    float dist2 = dist(*p2);
-    return (dist1 < dist2) ? -1 : 1;
 }
 
 void ConvexHull(struct Point arr[], int n) {
@@ -61,7 +57,7 @@ void ConvexHull(struct Point arr[], int n) {
     arr[0] = arr[bottommost];
     arr[bottommost] = temp; // bottommost becomes P0
 
-    qsort(arr + 1, n - 1, sizeof(struct Point), comparePolar); // sorting by polar angle
+    bubbleSort(arr + 1, n - 1); //by sine
 
     int top = -1;
 
