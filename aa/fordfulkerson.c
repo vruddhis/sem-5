@@ -1,154 +1,186 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct graph {
+#define MAX_NODES 1000
+#define MAX_ITERATIONS 100
+
+typedef struct {
+    int vertices[MAX_NODES];
+    int direction[MAX_NODES];
+    int length;
+} Path;
+
+typedef struct {
+    int capacity[MAX_NODES][MAX_NODES];
+    int flow[MAX_NODES][MAX_NODES];
     int n;
-    int flows[10][10];
-    int residual[10][10];
-    int reverse[10][10];
-    struct graph* next;
-} graph;
+} Graph;
 
-typedef struct path {
-    int len;
-    int order[10];
-    int min_value;
-} path;
+typedef struct {
+    Graph curr_graph;
+    Path chosen_path;
+} Iteration;
 
-typedef struct iteration {
-    graph* g;
-    path* p;
-} it;
-
-graph* initialize() {
-    graph* new = (graph*)malloc(sizeof(graph));
-    printf("How many vertices? ");
-    int n, c;
-    scanf("%d", &n);
-    new->n = n;
-    
-    printf("Vertex 0 is s, vertex %d is t.\n", n - 1);
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            if (i == j) {
-                new->residual[i][j] = 0;
-                new->flows[i][j] = 0;
-                new->reverse[i][j] = 0;
-            }
-            printf("What is the capacity from vertex %d to %d? ", i, j);
-            scanf("%d", &c);
-            new->residual[i][j] = c;
-            new->flows[i][j] = 0;
-            new->reverse[i][j] = 0;
-        }
-    }
-    new->next = NULL;
-    return new;
+int min(int x, int y) {
+    return x < y ? x : y;
 }
 
-it* augmented_path(graph* curr_g) {
-    int n = curr_g->n;
-    int visited[10] = {0}; 
-    int parent[10] = {-1}; 
-    int queue[10];
-    int front = 0, rear = 0;
-    int flag;
+Path createPath() {
+    Path path;
+    path.length = 0;
+    return path;
+}
 
-    queue[rear++] = 0; 
-    visited[0] = 1;
+void enqueue(int *q, int *tail, int x) {
+    q[(*tail)++] = x;
+}
 
-    
-    while (front < rear && visited[n-1] == 0) { 
-        int u = queue[front++];
-        for (int v = 0; v < n; v++) {
-            
-            if (visited[v] == 0 && curr_g->residual[u][v] > 0) {
-                queue[rear++] = v;
-                visited[v] = 1;
-                parent[v] = u;
-            }
-            
-            else if (visited[v] == 0 && curr_g->reverse[u][v] > 0) {
-                queue[rear++] = v;
-                visited[v] = 1;
-                parent[v] = u;
+int dequeue(int *q, int *head) {
+    return q[(*head)++];
+}
+
+Path bfs(Graph *g, int start, int target) {
+    int head = 0, tail = 0;
+    int queue[MAX_NODES];
+    int pred[MAX_NODES];
+    int direction[MAX_NODES];
+    int color[MAX_NODES];
+
+    for (int i = 0; i < g->n; i++) {
+        color[i] = -1;
+        pred[i] = -1;
+    }
+
+    enqueue(queue, &tail, start);
+    color[start] = 0;
+
+    while (head < tail) {
+        int u = dequeue(queue, &head);
+        for (int v = 0; v < g->n; v++) {
+            if (color[v] == -1) {
+                if (g->capacity[u][v] - g->flow[u][v] > 0) {
+                    enqueue(queue, &tail, v);
+                    color[v] = 0;
+                    pred[v] = u;
+                    direction[v] = 0;
+                } else if (g->flow[v][u] > 0) {
+                    enqueue(queue, &tail, v);
+                    color[v] = 0;
+                    pred[v] = u;
+                    direction[v] = 1;
+                }
             }
         }
     }
 
-    
-    if (visited[n-1] == 0) {
-        return NULL;
+    Path path = createPath();
+    if (color[target] == 0) {
+        for (int v = target; v != -1; v = pred[v]) {
+            path.vertices[path.length] = v;
+            path.direction[path.length] = direction[v];
+            path.length++;
+        }
+        for (int i = 0; i < path.length / 2; i++) {
+            int temp = path.vertices[i];
+            path.vertices[i] = path.vertices[path.length - 1 - i];
+            path.vertices[path.length - 1 - i] = temp;
+
+            temp = path.direction[i];
+            path.direction[i] = path.direction[path.length - 1 - i];
+            path.direction[path.length - 1 - i] = temp;
+        }
     }
+    return path;
+}
 
+Graph updateGraph(Graph *g, Path *path) {
+    Graph new_graph = *g;
+    int increment = 1000000000;
 
-    path* p = (path*)malloc(sizeof(path));
-    p->len = 0;
-    p->min_value = __INT_MAX__; 
-
-    int v = n-1;
-    while (v != 0) { 
-        p->order[p->len++] = v;
-        int u = parent[v];
-        if (curr_g->residual[u][v] > 0) {
-            p->min_value = (curr_g->residual[u][v] < p->min_value) ? curr_g->residual[u][v] : p->min_value;
+    for (int i = 0; i < path->length - 1; i++) {
+        int u = path->vertices[i];
+        int v = path->vertices[i + 1];
+        if (path->direction[i + 1] == 0) {
+            increment = min(increment, g->capacity[u][v] - g->flow[u][v]);
         } else {
-            p->min_value = (curr_g->reverse[u][v] < p->min_value) ? curr_g->reverse[u][v] : p->min_value;
+            increment = min(increment, g->flow[v][u]);
         }
-        v = u;
-    }
-    p->order[p->len++] = 0; 
-
-   
-    for (int i = 0; i < p->len / 2; i++) {
-        int temp = p->order[i];
-        p->order[i] = p->order[p->len - i - 1];
-        p->order[p->len - i - 1] = temp;
     }
 
-    it* new_it = (it*)malloc(sizeof(it));
-    new_it->g = curr_g;
-    new_it->p = p;
-    return new_it;
-}
-
-void update_graph(graph* g, path* p) {
-    for (int i = 0; i < p->len - 1; i++) {
-        int u = p->order[i];
-        int v = p->order[i + 1];
-
-        
-        g->flows[u][v] += p->min_value;
-        g->residual[u][v] -= p->min_value;
-        g->reverse[v][u] += p->min_value;
-    }
-}
-
-int ford_fulkerson(graph* g) {
-    int max_flow = 0;
-    it* iterations[100]; 
-    int iteration_count = 0;
-
-    while (1) {
-        
-        it* current_it = augmented_path(g);
-        if (current_it == NULL) {
-            break; 
+    for (int i = 0; i < path->length - 1; i++) {
+        int u = path->vertices[i];
+        int v = path->vertices[i + 1];
+        if (path->direction[i + 1] == 0) {
+            new_graph.flow[u][v] += increment;
+            new_graph.flow[v][u] -= increment;
+        } else {
+            new_graph.flow[v][u] += increment;
+            new_graph.flow[u][v] -= increment;
         }
-
-        max_flow += current_it->p->min_value;
-        update_graph(g, current_it->p);
-        iterations[iteration_count++] = current_it;
     }
-
-    
-
-    return max_flow;
+    return new_graph;
 }
 
 int main() {
-    graph* g = initialize();
-    int max_flow = ford_fulkerson(g);
-    printf("\nThe maximum possible flow is %d\n", max_flow);
+    Graph g;
+    printf("Enter the number of nodes: ");
+    scanf("%d", &g.n);
+
+    for (int i = 0; i < g.n; i++) {
+        for (int j = 0; j < g.n; j++) {
+            g.capacity[i][j] = 0;
+            g.flow[i][j] = 0;
+        }
+    }
+
+    int edges;
+    printf("Enter the number of edges: ");
+    scanf("%d", &edges);
+
+    printf("Enter edges in format <from> <to> <capacity>:\n");
+    for (int i = 0; i < edges; i++) {
+        int from, to, capacity;
+        scanf("%d %d %d", &from, &to, &capacity);
+        g.capacity[from][to] = capacity;
+    }
+
+    int source, sink;
+    printf("Enter source and sink: ");
+    scanf("%d %d", &source, &sink);
+
+    int max_flow = 0;
+    Iteration iterations[MAX_ITERATIONS];
+    int iteration_count = 0;
+
+    while (1) {
+        Path path = bfs(&g, source, sink);
+        if (path.length == 0) {
+            break;
+        }
+        iterations[iteration_count].curr_graph = g;
+        iterations[iteration_count].chosen_path = path;
+        iteration_count++;
+        g = updateGraph(&g, &path);
+        max_flow += 1000000000; 
+    }
+
+    printf("Max Flow: %d\n", max_flow);
+    printf("Iterations:\n");
+    for (int i = 0; i < iteration_count; i++) {
+        printf("Iteration %d:\n", i + 1);
+        printf("Current Flow Matrix:\n");
+        for (int j = 0; j < g.n; j++) {
+            for (int k = 0; k < g.n; k++) {
+                printf("%d ", iterations[i].curr_graph.flow[j][k]);
+            }
+            printf("\n");
+        }
+        printf("Chosen Path: ");
+        for (int j = 0; j < iterations[i].chosen_path.length; j++) {
+            printf("%d(%d) ", iterations[i].chosen_path.vertices[j], iterations[i].chosen_path.direction[j]);
+        }
+        printf("\n");
+    }
+
     return 0;
 }

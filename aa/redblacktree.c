@@ -137,42 +137,7 @@ Node* insert_node(Node* root, int x) {
     return root;
 }
 
-Node* search(Node* root, int key) {
-    Node* curr = root;
-    while (curr != NULL) {
-        if (key == curr->val) {
-            return curr;
-        } else if (key < curr->val) {
-            curr = curr->left_child;
-        } else {
-            curr = curr->right_child;
-        }
-    }
-    return NULL;
-}
-Node* inorder_successor(Node* root, Node* x){
-    if (x->right_child != NULL) {
-        Node* curr = x->right_child;
-        while (curr->left_child != NULL) {
-            curr = curr->left_child;
-        }
-        return curr;
-    }
 
-    return NULL;
-}
-
-Node* delete(Node* root, int value){
-    if (search(root, value) == NULL){return root;}
-    
-    Node* to_delete = search(root, value);
-    Node* y = to_delete;
-    Node* x;
-    char original_colour = y->colour;
-    Node* successor = inorder_successor(root, to_delete);
-
-
-}
 
 void inorder(Node* root) {
     if (root == NULL) {

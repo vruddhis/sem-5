@@ -16,7 +16,8 @@ def pagerank(graph):
             break
 
         pr=new_pr  
-
+        print("After one iteration:")
+        print(pr)
     return pr
 
 graph=[
